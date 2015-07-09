@@ -6,11 +6,6 @@ import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import net.virtualvoid.sbt.graph._
 
 object SpaceboxBuild extends Build {
-  val Organization = "com.github.curzonj"
-  val Name = "Spacebox Sim2"
-  val Version = "0.1.0-SNAPSHOT"
-  val ScalaVersion = "2.11.6"
-
   // It has to be this version or the xsbt plugin
   // causes us version conflicts because it loads
   // this version
@@ -34,10 +29,10 @@ object SpaceboxBuild extends Build {
         net.virtualvoid.sbt.graph.Plugin.graphSettings ++
 
         Seq(
-          organization := Organization,
-          name := Name,
-          version := Version,
-          scalaVersion := ScalaVersion,
+          organization := "com.github.curzonj",
+          name := "Spacebox Sim2",
+          version := "0.1.0-SNAPSHOT",
+          scalaVersion := "2.11.6",
           resolvers += Classpaths.typesafeReleases,
           resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
           resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases/",
