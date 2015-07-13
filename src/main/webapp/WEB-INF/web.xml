@@ -6,11 +6,11 @@
 
     <servlet>
         <servlet-name>websockets</servlet-name>
-        <servlet-class>org.scalatra.example.MyWebsocketEndpoint</servlet-class>
+        <servlet-class>com.github.curzonj.FirehoseServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
         <servlet-name>websockets</servlet-name>
-        <url-pattern>/echo</url-pattern>
+        <url-pattern>/</url-pattern>
     </servlet-mapping>
 </web-app>
