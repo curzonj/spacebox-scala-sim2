@@ -1,24 +1,22 @@
 import java.util.TimerTask
+
 import java.util.concurrent.{TimeUnit, ScheduledFuture, ScheduledThreadPoolExecutor}
-import org.json4s.jackson.JsonMethods
-import scredis.exceptions.RedisTransactionAbortedException
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Try, Success, Failure}
 import com.github.curzonj.RedisFactory
-import org.slf4j.LoggerFactory
 import ExecutionContext.Implicits.global
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import com.github.curzonj.Logging
 
-object SimRunner {
+object SimRunner extends Logging {
   def main(args: Array[String]): Unit = {
     currentTick = System.currentTimeMillis
     pool.schedule(task, interval, TimeUnit.MILLISECONDS)
 
-    println("scheduled")
+    logger.info("scheduled")
   }
 
-  val logger = LoggerFactory.getLogger(getClass)
   val task = new TimerTask {
     def run() =  worldTick
   }
@@ -34,28 +32,33 @@ object SimRunner {
     val startedAt= System.currentTimeMillis
     val jitter = startedAt - currentTick
 
-    printM("world tick", "tick" -> currentTick, "jitter" -> jitter, "ts" -> startedAt)
+    logger.info("world tick "+logfmt("tick" -> currentTick, "jitter" -> jitter, "ts" -> startedAt))
 
     val name = "command_at_"+currentTick
-    redis.withTransaction { t =>
+    val future = redis.withTransaction { t =>
       t.rename("commands", name)
       t.lRange[String](name)
     } map { value =>
       def optionalJson(s: String): Any = Try(parse(s)) getOrElse s
       val obj = value map { v => optionalJson(v) }
 
-      println(obj)
-    } onComplete { _ =>
+      logger.info(obj.toString)
+    }
+
+    future onFailure {
+      case t => logger.error("error in worldTick", t)
+    }
+
+    future onComplete { _ =>
       val endedAt = System.currentTimeMillis
-      printM("end tick", "duration" -> (endedAt - startedAt))
+      logger.info("end tick "+logfmt("duration" -> (endedAt - startedAt)))
 
       val delay = currentTick + interval - endedAt
       pool.schedule(task, delay, TimeUnit.MILLISECONDS)
     }
   }
 
-  def printM(str: String, list: (String, Any)*): Unit = {
-    println(str + " " + (list map {case (key, value) => "" + key + "=" + value} mkString " "))
+  def logfmt(list: (String, Any)*): String = {
+    list map {case (key, value) => "" + key + "=" + value} mkString " "
   }
-
 }

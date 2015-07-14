@@ -6,9 +6,8 @@ import scredis._
 import scala.util.{ Success, Failure }
 import java.net.URI
 
-object RedisFactory {
+object RedisFactory extends Logging {
 
-  val logger = LoggerFactory.getLogger(getClass)
   val typesafeConfig = ConfigFactory.load()
   val mergedConfig = sys.env.get("REDIS_URL").map { value =>
     val uri = new URI(value)

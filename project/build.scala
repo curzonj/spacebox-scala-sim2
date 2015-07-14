@@ -1,7 +1,5 @@
 import sbt._
 import Keys._
-import com.mojolly.scalate.ScalatePlugin._
-import ScalateKeys._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import net.virtualvoid.sbt.graph._
 
@@ -25,7 +23,6 @@ object SpaceboxBuild extends Build {
     file("."),
     settings =
       mySettings ++
-        scalateSettings ++
         net.virtualvoid.sbt.graph.Plugin.graphSettings ++
 
         Seq(
@@ -38,9 +35,10 @@ object SpaceboxBuild extends Build {
           resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases/",
 
           libraryDependencies ++= Seq(
-            "ch.qos.logback" % "logback-classic" % "1.1.1" % "runtime",
             "javax.servlet" % "javax.servlet-api" % "3.1.0" % "runtime;compile;provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar"),
 
+            "org.codehaus.groovy" %	"groovy-all" % "2.4.3",
+            "ch.qos.logback" % "logback-classic" % "1.1.2",
             "com.typesafe.akka" % "akka-actor_2.11" % "2.4-M2",
             "org.json4s" %% "json4s-jackson" % "3.3.0.RC2",
             "com.livestream" %% "scredis" % "2.0.6",
