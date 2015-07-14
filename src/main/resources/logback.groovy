@@ -10,5 +10,13 @@ appender("STDOUT-2", ConsoleAppender) {
     }
 }
 
+appender("STDOUT-3", ConsoleAppender) {
+    encoder(PatternLayoutEncoder) {
+        pattern = "%-5level %logger{5} - %msg%n"
+    }
+}
 
-root(DEBUG, [ "STDOUT-2" ])
+
+root(DEBUG, [ "STDOUT-3" ])
+logger("scredis", INFO)
+logger("com.github.curzonj", TRACE)
