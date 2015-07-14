@@ -28,8 +28,9 @@ object WorldTicker extends Logging {
 
   var currentTick: Long = 0
 
-  var lastCommandFetch: Future[List[String]] = Future { List() }
-  def fetchCommands: Future[List[String]] = {
+  type ApiCommand = String
+  var lastCommandFetch: Future[List[ApiCommand]] = Future { List() }
+  def fetchCommands: Future[List[ApiCommand]] = {
     val thisTick = currentTick
     val name = "command_at_"+thisTick
     val commandFetch = lastCommandFetch
@@ -37,7 +38,7 @@ object WorldTicker extends Logging {
     logger.info("at=commandFetch:start ts={}", thisTick)
     lastCommandFetch = redis.withTransaction { t =>
       t.rename("commands", name)
-      t.lRange[String](name)
+      t.lRange[ApiCommand](name)
     }
 
     lastCommandFetch onComplete { _ =>
@@ -55,7 +56,7 @@ object WorldTicker extends Logging {
     logger.info("at=worldTick:start tick={} jitter={}", currentTick, jitter)
 
     val future = fetchCommands map { value =>
-      def optionalJson(s: String): Any = Try(parse(s)) getOrElse s
+      def optionalJson(s: ApiCommand): Any = Try(parse(s)) getOrElse s
       val obj = value map { v => optionalJson(v) }
 
       logger.trace(obj.toString)
