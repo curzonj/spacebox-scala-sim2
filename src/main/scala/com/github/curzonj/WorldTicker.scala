@@ -14,31 +14,47 @@ object WorldTicker extends Logging {
     currentTick = System.currentTimeMillis
     pool.schedule(task, interval, TimeUnit.MILLISECONDS)
 
-    logger.info("scheduled")
+    logger.info("at=scheduled")
   }
 
   val task = new TimerTask {
     def run() =  worldTick
   }
 
-  val interval = 80
-  var currentTick: Long = 0
-
   lazy val pool = new ScheduledThreadPoolExecutor(1)
   lazy val redis = RedisFactory.get
+
+  val interval = 80
+
+  var currentTick: Long = 0
+
+  var lastCommandFetch: Future[List[String]] = Future { List() }
+  def fetchCommands: Future[List[String]] = {
+    val thisTick = currentTick
+    val name = "command_at_"+thisTick
+    val commandFetch = lastCommandFetch
+
+    logger.info("at=commandFetch:start ts={}", thisTick)
+    lastCommandFetch = redis.withTransaction { t =>
+      t.rename("commands", name)
+      t.lRange[String](name)
+    }
+
+    lastCommandFetch onComplete { _ =>
+      logger.info("at=commandFetch:complete ts={}", thisTick)
+    }
+
+    commandFetch
+  }
 
   def worldTick: Unit = {
     currentTick += interval
     val startedAt= System.currentTimeMillis
     val jitter = startedAt - currentTick
 
-    logger.info("world tick "+logfmt("tick" -> currentTick, "jitter" -> jitter, "ts" -> startedAt))
+    logger.info("at=worldTick:start tick={} jitter={}", currentTick, jitter)
 
-    val name = "command_at_"+currentTick
-    val future = redis.withTransaction { t =>
-      t.rename("commands", name)
-      t.lRange[String](name)
-    } map { value =>
+    val future = fetchCommands map { value =>
       def optionalJson(s: String): Any = Try(parse(s)) getOrElse s
       val obj = value map { v => optionalJson(v) }
 
@@ -46,12 +62,12 @@ object WorldTicker extends Logging {
     }
 
     future onFailure {
-      case t => logger.error("error in worldTick", t)
+      case t => logger.error("at=worldTick:error", t)
     }
 
     future onComplete { _ =>
       val endedAt = System.currentTimeMillis
-      logger.info("end tick "+logfmt("duration" -> (endedAt - startedAt)))
+      logger.info("at=worldTick:end duration={}", endedAt - startedAt)
 
       val delay = currentTick + interval - endedAt
       pool.schedule(task, delay, TimeUnit.MILLISECONDS)

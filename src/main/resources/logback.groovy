@@ -17,6 +17,6 @@ appender("STDOUT-3", ConsoleAppender) {
 }
 
 
-root(DEBUG, [ "STDOUT-3" ])
+root(DEBUG, [ "STDOUT-1" ])
 logger("scredis", INFO)
 logger("com.github.curzonj", TRACE)
