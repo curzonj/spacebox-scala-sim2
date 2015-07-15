@@ -58,11 +58,6 @@ object CommandReceiver extends Logging {
         val extracted = parsed flatMap {
           v => Try(v.extract[ApiCommand])
         } map { cmd =>
-          val bytes = KryoFactory.serialize(cmd)
-          logger.debug("data sizes kryoDeflate={} json={}", bytes.size, value.getBytes.size)
-          var dser = KryoFactory.readObject(bytes, classOf[ApiCommand])
-          println(dser)
-
           // parsed.get can't throw an exception here because
           // Try.map only looks at successes
           cmd.sourceJson = Some(parsed.get)

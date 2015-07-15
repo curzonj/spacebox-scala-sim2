@@ -11,7 +11,7 @@ import com.esotericsoftware.kryo.io.{Input, Output}
   TODO: reuse the baos and the input/outputs also
  */
 object KryoFactory {
-  def serialize(value: Any): Array[Byte] = {
+  def deflate(value: Any): Array[Byte] = {
     val kryo = kryos.get
     val baos = new ByteArrayOutputStream
     val stream = new DeflaterOutputStream(baos)
@@ -22,10 +22,26 @@ object KryoFactory {
     baos.toByteArray
   }
 
-  def readObject[T](data: Array[Byte], klass: Class[T]): T = {
+  def inflate[T](data: Array[Byte], klass: Class[T]): T = {
     val kryo = kryos.get
     val stream = new InflaterInputStream(new ByteArrayInputStream(data))
     val input = new Input(stream)
+    kryo.readObject(input, klass)
+  }
+
+  def bytes(value: Any): Array[Byte] = {
+    val kryo = kryos.get
+    val baos = new ByteArrayOutputStream
+    val output = new Output(baos, 4096)
+    kryo.writeObject(output, value)
+    output.close()
+
+    baos.toByteArray
+  }
+
+  def fromBytes[T](data: Array[Byte], klass: Class[T]): T = {
+    val kryo = kryos.get
+    val input = new Input(data)
     kryo.readObject(input, klass)
   }
 
